@@ -27,7 +27,6 @@ const batchImport = async () => {
         console.log({ status: 500, data: greetings, message: err.message });
         console.log(err.stack);
       }
-
 }
 
 batchImport()

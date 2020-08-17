@@ -4,7 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const { getUsers } = require("./exercises/exercise-1.3");
-// const { addUser } = require("./exercises/exercise-1.4");
+const { addUser } = require("./exercises/exercise-1.4");
 
 const PORT = process.env.PORT || 8000;
 
@@ -21,7 +21,11 @@ express()
     const status = users.length === 0 ? 404 : 200;
     res.status(status).json({ users });
   })
-
+  .post(`/exercise-1/users`, async (req, res) => {
+    const user = req.body;
+    await addUser(user);
+    res.status(201).json({ ...user });
+  })
   // exercise 2
 
   // handle 404s

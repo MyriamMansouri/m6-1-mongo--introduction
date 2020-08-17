@@ -30,8 +30,8 @@ express()
   })
   // exercise 2
   .post(`/exercise-2/greeting`, createGreeting)
-  .get("/exercise-2/greetings", getGreetings)
-  .get(`/exercise-2/greetings/:_id`, getGreeting)
+  .get("/exercise-2/greeting", getGreetings)
+  .get(`/exercise-2/greeting/:_id`, getGreeting)
 
   // handle 404s
   .use((req, res) => res.status(404).type("txt").send("🤷‍♂️"))

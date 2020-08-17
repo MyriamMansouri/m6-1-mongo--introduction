@@ -27,12 +27,40 @@ exports.createGreeting = async (req, res) => {
 };
 
 exports.getGreetings = async (req, res) => {
+  const { start, limit, all } = req.query;
+  let startIndex = start ? Number(start) : 0;
+  let numGreetings = limit ? Number(limit) : 25;
   try {
     const client = await MongoClient(MONGO_URI, options);
     await client.connect();
     const db = client.db(DB_NAME);
     const r = await db.collection("greetings").find().toArray();
-    res.status(200).json({ status: 200, data: r });
+    if (r.length > 0) {
+      // if all = true in query params, display all data
+      if (all) {
+        startIndex = 0;
+        numGreetings = r.length;
+      }
+      // try user query param specs
+      let sample = r.slice(startIndex, startIndex + numGreetings);
+      // if not working, display default data
+      if (sample.length === 0) {
+        startIndex = 0;
+        numGreetings = 10;
+        sample = r.slice(0, 10);
+      }
+      res
+        .status(200)
+        .json({
+          status: 200,
+          start: startIndex,
+          limit: numGreetings,
+          data: sample,
+        });
+    } else {
+      // if no data in db send 404
+      res.status(404).json({ status: 404, data: "Not Found" });
+    }
     client.close();
   } catch (err) {
     res

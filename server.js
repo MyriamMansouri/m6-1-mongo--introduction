@@ -6,7 +6,13 @@ const morgan = require("morgan");
 const assert = require("assert");
 const { getUsers } = require("./exercises/exercise-1.3");
 const { addUser } = require("./exercises/exercise-1.4");
-const { createGreeting, getGreeting, getGreetings, deleteGreeting} = require("./exercises/exercise-2");
+const {
+  createGreeting,
+  getGreeting,
+  getGreetings,
+  deleteGreeting,
+  updateGreeting,
+} = require("./exercises/exercise-2");
 
 const PORT = process.env.PORT || 8000;
 
@@ -32,8 +38,9 @@ express()
   .post(`/exercise-2/greeting`, createGreeting)
   .get("/exercise-2/greeting", getGreetings)
   .get(`/exercise-2/greeting/:_id`, getGreeting)
-  .delete('/exercise-2/greeting/:_id', deleteGreeting)
-
+  .delete("/exercise-2/greeting/:_id", deleteGreeting)
+  .put("/exercise-2/greeting/:_id", updateGreeting)
+  
   // handle 404s
   .use((req, res) => res.status(404).type("txt").send("🤷‍♂️"))
 

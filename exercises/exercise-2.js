@@ -75,9 +75,15 @@ exports.getGreeting = async (req, res) => {
     let r = await db.collection("greetings").findOne({ _id });
     // if db returns nothing, we try to find a greeting by its language instead of the id
     if (!r) {
-        const lang = _id.split("").map((letter, index) => letter = index===0 ? letter.toUpperCase(): letter.toLowerCase()).join("")
-        console.log(lang)
-        r = await db.collection("greetings").findOne({ lang });
+      const lang = _id
+        .split("")
+        .map(
+          (letter, index) =>
+            (letter = index === 0 ? letter.toUpperCase() : letter.toLowerCase())
+        )
+        .join("");
+      console.log(lang);
+      r = await db.collection("greetings").findOne({ lang });
     }
     assert.equal(true, !!r); // check if r is not undefined
     client.close();
@@ -97,13 +103,39 @@ exports.deleteGreeting = async (req, res) => {
     await client.connect();
     const db = client.db(DB_NAME);
     const r = await db.collection("greetings").deleteOne({ _id });
-    assert.equal(1, r.deletedCount);
-    res.status(204).send();
+    assert.equal(1, r.deletedCount, "Document was not deleted");
+    res.status(204).send(); //204 doesn't send a body with the response
     client.close();
   } catch (err) {
     res
       .status(404)
       .json({ status: 404, _id, data: "Not Found", message: err.message });
+    console.log(err.stack);
+  }
+};
+
+exports.updateGreeting = async (req, res) => {
+  const _id = req.params._id.toUpperCase();
+  const { hello } = req.body;
+
+  try {
+    assert.equal(true, !!hello, "No 'hello' key was provided"); // verifies hello key was passed to BE
+    const client = await MongoClient(MONGO_URI, options);
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const newValues = {
+      $set: { hello },
+    };
+    const r = await db.collection("greetings").updateOne({ _id }, newValues);
+
+    assert.equal(1, r.matchedCount, "No matching language in DB");
+    assert.equal(1, r.modifiedCount, "Document was not updated"); 
+    res.status(200).json({status:200, _id, hello}); 
+    client.close();
+  } catch (err) {
+    res
+      .status(404)
+      .json({ status: 404, _id,  message: err.message });
     console.log(err.stack);
   }
 };

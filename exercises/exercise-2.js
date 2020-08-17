@@ -35,32 +35,28 @@ exports.getGreetings = async (req, res) => {
     await client.connect();
     const db = client.db(DB_NAME);
     const r = await db.collection("greetings").find().toArray();
-    if (r.length > 0) {
-      // if all = true in query params, display all data
-      if (all) {
-        startIndex = 0;
-        numGreetings = r.length;
-      }
-      // try user query param specs
-      let sample = r.slice(startIndex, startIndex + numGreetings);
-      // if not working, display default data
-      if (sample.length === 0) {
-        startIndex = 0;
-        numGreetings = 10;
-        sample = r.slice(0, 10);
-      }
-      res
-        .status(200)
-        .json({
-          status: 200,
-          start: startIndex,
-          limit: numGreetings,
-          data: sample,
-        });
-    } else {
-      // if no data in db send 404
-      res.status(404).json({ status: 404, data: "Not Found" });
+    assert.equal(true, r.length > 0);
+
+    // if all = true in query params, display all data
+    if (all) {
+      startIndex = 0;
+      numGreetings = r.length;
     }
+    // try user query param specs
+    let sample = r.slice(startIndex, startIndex + numGreetings);
+    // if not working, display default data
+    if (sample.length === 0) {
+      startIndex = 0;
+      numGreetings = 10;
+      sample = r.slice(0, 10);
+    }
+    res.status(200).json({
+      status: 200,
+      start: startIndex,
+      limit: numGreetings,
+      data: sample,
+    });
+
     client.close();
   } catch (err) {
     res
@@ -76,11 +72,34 @@ exports.getGreeting = async (req, res) => {
     const client = await MongoClient(MONGO_URI, options);
     await client.connect();
     const db = client.db(DB_NAME);
-    const r = await db.collection("greetings").findOne({ _id });
+    let r = await db.collection("greetings").findOne({ _id });
+    // if db returns nothing, we try to find a greeting by its language instead of the id
+    if (!r) {
+        const lang = _id.split("").map((letter, index) => letter = index===0 ? letter.toUpperCase(): letter.toLowerCase()).join("")
+        console.log(lang)
+        r = await db.collection("greetings").findOne({ lang });
+    }
+    assert.equal(true, !!r); // check if r is not undefined
     client.close();
-    r
-      ? res.status(200).json({ status: 200, _id, data: r })
-      : res.status(404).json({ status: 404, _id, data: "Not Found" });
+    res.status(200).json({ status: 204, data: r });
+  } catch (err) {
+    res
+      .status(404)
+      .json({ status: 404, _id, data: "Not Found", message: err.message });
+    console.log(err.stack);
+  }
+};
+
+exports.deleteGreeting = async (req, res) => {
+  const _id = req.params._id.toUpperCase();
+  try {
+    const client = await MongoClient(MONGO_URI, options);
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const r = await db.collection("greetings").deleteOne({ _id });
+    assert.equal(1, r.deletedCount);
+    res.status(204).send();
+    client.close();
   } catch (err) {
     res
       .status(404)
